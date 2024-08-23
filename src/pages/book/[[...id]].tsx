@@ -14,7 +14,7 @@ const Page = () => {
   const { id } = router.query;
   console.log(id); // catch all segment를 하면 id값이 배열 형태로 저장이 된다.
 
-  return <div>북 {id}</div>;
+  return <h1>북 {id}</h1>;
 };
 
 export default Page;
