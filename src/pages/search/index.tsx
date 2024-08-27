@@ -1,3 +1,4 @@
+import SearchableLayout from "@/components/searchable-layout";
 import { useRouter } from "next/router";
 
 const Page = () => {
@@ -9,3 +10,8 @@ const Page = () => {
 };
 
 export default Page;
+
+//* 페이지별로 레이아웃 적용하기
+Page.getLayout = (page: React.ReactNode) => {
+  return <SearchableLayout>{page}</SearchableLayout>;
+};
