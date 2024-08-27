@@ -1,12 +1,16 @@
 import SearchableLayout from "@/components/searchable-layout";
 import { useRouter } from "next/router";
+import BookItem from "@/components/book-item";
+import books from "@/mock/books.json";
 
 const Page = () => {
-  const router = useRouter();
-  console.log(router);
-  const { q } = router.query; // 쿼리스트링 꺼내기
-
-  return <h1>검색 {q}</h1>;
+  return (
+    <div>
+      {books.map((book) => (
+        <BookItem key={book.id} {...book} />
+      ))}
+    </div>
+  );
 };
 
 export default Page;
