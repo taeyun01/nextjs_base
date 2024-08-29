@@ -35,6 +35,10 @@ export const getStaticProps = async () => {
       allBooks,
       recoBooks,
     },
+    //* ISR(Incremental Static Regeneration) : 일정시간을 주기적으로 페이지를 재생성하는 방식, 되도록이면 가장 추천하는 방식
+    //* 가장 강력한 사전 렌더링 방식
+    revalidate: 3, // 3초 후 재검증, 즉 페이지 재생성
+    // 그럼 이제 3초 마다 랜덤 도서 데이터가 바뀌는 것을 확인할 수 있다.
   };
 };
 // SSG방식쓸 때 Props타입도 바꿔줘야 함

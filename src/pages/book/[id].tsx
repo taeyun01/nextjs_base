@@ -6,6 +6,7 @@ import {
 } from "next";
 import style from "./[id].module.css";
 import { fetchOneBook } from "@/lib/fetch.one-book";
+import { useRouter } from "next/router";
 //* URL 파라미터를 사용해서 동적경로에 대응하기
 //* [id] : 경로뒤에 하나의 id가 올 수 있음  localhost:3000/book/100
 //* [...id] : 경로뒤에 여러개의 id가 연달아 올 수 있음  localhost:3000/book/100/201/303
@@ -28,6 +29,8 @@ const mockData = {
 };
 
 //* 동적인 경로에 SSG 적용하기 (getStaticPaths()가 필수)
+//* 상세페이지 같은 동적페이지나 모든 도서의 id를 불러오기 어렵다면 fallback: "blocking" 사용 (또는 새로운 데이터(새로운 book)가 계속 추가되어야 하는 상황에도 사용 가능
+//* fallback: "blocking"을 사용해 첫번째 요청 때에는 SSR방식으로 페이지를 새롭게 생성해서 신규데이터를 반영하고, 그 다음부터는 SSG방식으로 저장된 페이지를 매우 빠르게 반환하도록 만들 수 있다.
 export const getStaticPaths = async () => {
   return {
     //* 동적인 경로에 SSG를 적용하려먼 반드시 사전렌더링이 진행되기 전에 이 페이지에 존재하는 모든 경로들을 직접 설정하는 과정을 먼저 진행해줘야 한다. (getStaticPaths()로 설정)
@@ -37,7 +40,10 @@ export const getStaticPaths = async () => {
       { params: { id: "2" } }, // book/2에 접속하면 사전에 만들어둔 book/2.html을 바로 반환해준다.
       { params: { id: "3" } }, // book/3에 접속하면 사전에 만들어둔 book/3.html을 바로 반환해준다.
     ],
-    fallback: false, // 대비책, 보험 (parmas가 없으면 404 페이지 반환)
+    // fallback: false, // path에 설정하지 않는 경로는 모두 404페이지 반환
+    // fallback: "blocking", // SSR방식으로 실시간 페이지 생성(사전 렌더링)
+    fallback: true, // blocking처럼 SSR방식으로 실시간으로 페이지를 생성하지만 이때 페이지의 생성을 끝까지 기다렸다가 응답하는게 아닌 그냥 데이터가 없는 폴백상태의 페이지부터 반환해주고 그 뒤에 데이터가 들어오면 보내주는 방식.
+    // paths사용하지 않은 경로로 요청이 들어왔을 때, Props가 존재하지 않는 상태의 페이지를 먼저 사전렌더링 해서 브라우저에 보내준다.
   };
 };
 
@@ -48,6 +54,9 @@ export const getStaticProps = async (context: GetStaticPropsContext) => {
   console.log(id);
   const book = await fetchOneBook(Number(id));
 
+  // 아래 "문제가 발생헀습니다. 다시 시도해주세요" 대신 404 페이지르 리다이렉트 하고 싶을 때
+  if (!book) return { notFound: true };
+
   return {
     props: {
       book,
@@ -56,6 +65,10 @@ export const getStaticProps = async (context: GetStaticPropsContext) => {
 };
 
 const Page = ({ book }: InferGetStaticPropsType<typeof getStaticProps>) => {
+  const router = useRouter();
+  // 데이터가 페칭중일 때
+  if (router.isFallback) return "로딩중 입니다.";
+  // 데이터 로딩이 끝났는데도 문제가 발생했을 때
   if (!book) return "문제가 발생헀습니다. 다시 시도해주세요!";
 
   //* book은 null값일 수 있으므로 위에서 예외 처리
