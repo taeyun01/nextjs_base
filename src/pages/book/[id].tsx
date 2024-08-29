@@ -1,4 +1,9 @@
-import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import {
+  GetServerSidePropsContext,
+  GetStaticPropsContext,
+  InferGetServerSidePropsType,
+  InferGetStaticPropsType,
+} from "next";
 import style from "./[id].module.css";
 import { fetchOneBook } from "@/lib/fetch.one-book";
 //* URL 파라미터를 사용해서 동적경로에 대응하기
@@ -22,9 +27,22 @@ const mockData = {
     "https://shopping-phinf.pstatic.net/main_3888828/38888282618.20230913071643.jpg",
 };
 
-export const getServerSideProps = async (
-  context: GetServerSidePropsContext
-) => {
+//* 동적인 경로에 SSG 적용하기 (getStaticPaths()가 필수)
+export const getStaticPaths = async () => {
+  return {
+    //* 동적인 경로에 SSG를 적용하려먼 반드시 사전렌더링이 진행되기 전에 이 페이지에 존재하는 모든 경로들을 직접 설정하는 과정을 먼저 진행해줘야 한다. (getStaticPaths()로 설정)
+    //* 다음 3개의 페이지가 존재할 수 있음을 먼저 설정해줘야한다.
+    paths: [
+      { params: { id: "1" } }, // 프레임워크 상 id는 문자열만 가능하다.
+      { params: { id: "2" } }, // book/2에 접속하면 사전에 만들어둔 book/2.html을 바로 반환해준다.
+      { params: { id: "3" } }, // book/3에 접속하면 사전에 만들어둔 book/3.html을 바로 반환해준다.
+    ],
+    fallback: false, // 대비책, 보험 (parmas가 없으면 404 페이지 반환)
+  };
+};
+
+//* SSG 방식으로 변경하기
+export const getStaticProps = async (context: GetStaticPropsContext) => {
   //* 해당 페이지는 무조건 url파라미터가 있어야 하기 때문에 !단언을 해준다. (undefined가 아니라는 의미)
   const id = context.params!.id;
   console.log(id);
@@ -37,9 +55,7 @@ export const getServerSideProps = async (
   };
 };
 
-const Page = ({
-  book,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+const Page = ({ book }: InferGetStaticPropsType<typeof getStaticProps>) => {
   if (!book) return "문제가 발생헀습니다. 다시 시도해주세요!";
 
   //* book은 null값일 수 있으므로 위에서 예외 처리
