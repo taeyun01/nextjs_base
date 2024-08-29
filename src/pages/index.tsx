@@ -6,14 +6,22 @@ import style from "./index.module.css"; //? 파일을 index.css에서 index.modu
 import books from "@/mock/books.json";
 import BookItem from "@/components/book-item";
 import { useEffect } from "react";
-import { InferGetServerSidePropsType } from "next";
+import { InferGetServerSidePropsType, InferGetStaticPropsType } from "next";
 import { fetchBooks } from "@/lib/fetch-books";
 import { fetchRandomBooks } from "@/lib/fetch-random-books";
 
-//* Next에서 약속된 이름의 함수를 만들어서 내보내면 해당 페이지는 SSR을 수행하는 페이지로 인식한다.
-export const getServerSideProps = async () => {
+//* Next에서 약속된 이름의 함수를 만들어서 내보내면 해당 페이지는 SSR,SSG을 수행하는 페이지로 인식한다.
+
+//* SSG(정적 사이트 생성) : SSR의 단점을 해결하는 사전 렌더링 방식, 빌드 타임에 페이지를 미리 사전렌더링 해둠
+//* SSG장점 : 사전 렌더링이 많은 시간이 소요되는 페이지라도 사용자의 요청에는 애무 빠른속도로 응답 가능.
+//* SSG단점 : 매번 똑같은 페이지만 응답함. 최신데이터 반영은 어렵다. (빌드 타임 이후에는 다시는 페이지를 새롭게 생성하지 않음.)
+// SSG
+export const getStaticProps = async () => {
+  // export const getServerSideProps = async () => { // SSR
   // const allBooks = await fetchBooks(); // 모든 도서 데이터 가져오기
   // const recoBooks = await fetchRandomBooks(); // 랜덤 도서 데이터 가져오기
+
+  console.log("인덱스 페이지"); // SSG방식을 확인하려먼 빌드 후 확인
 
   //* 두개의 비동기 함수를 동시에(병렬로) 실행하고 모든 데이터를 가져온다.
   //* 병렬로 API요청이 동시에 일어나기 때문에 좀 더 빨리 페이지가 렌더링 된다.
@@ -29,12 +37,11 @@ export const getServerSideProps = async () => {
     },
   };
 };
-
-//* App컴포넌트를 제외하고는 CSS Module을 활용해야 한다.
+// SSG방식쓸 때 Props타입도 바꿔줘야 함
 export default function Home({
   allBooks,
   recoBooks,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+}: InferGetStaticPropsType<typeof getStaticProps>) {
   return (
     <div className={style.container}>
       <section>
