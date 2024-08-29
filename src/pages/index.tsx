@@ -7,47 +7,45 @@ import books from "@/mock/books.json";
 import BookItem from "@/components/book-item";
 import { useEffect } from "react";
 import { InferGetServerSidePropsType } from "next";
+import { fetchBooks } from "@/lib/fetch-books";
+import { fetchRandomBooks } from "@/lib/fetch-random-books";
 
 //* Next에서 약속된 이름의 함수를 만들어서 내보내면 해당 페이지는 SSR을 수행하는 페이지로 인식한다.
 export const getServerSideProps = async () => {
-  // 컴포넌트보다 먼저 실행되어서, 컴포넌트에 필요한 데이터를 불러오는 함수
-  // 브라우저에서 동작하는 함수 같은건 사용불가
-  console.log("서바사이드 프롭스");
-  const data = "hello";
+  // const allBooks = await fetchBooks(); // 모든 도서 데이터 가져오기
+  // const recoBooks = await fetchRandomBooks(); // 랜덤 도서 데이터 가져오기
+
+  //* 두개의 비동기 함수를 동시에(병렬로) 실행하고 모든 데이터를 가져온다.
+  //* 병렬로 API요청이 동시에 일어나기 때문에 좀 더 빨리 페이지가 렌더링 된다.
+  const [allBooks, recoBooks] = await Promise.all([
+    fetchBooks(),
+    fetchRandomBooks(),
+  ]);
+
   return {
     props: {
-      data,
+      allBooks,
+      recoBooks,
     },
   };
 };
 
 //* App컴포넌트를 제외하고는 CSS Module을 활용해야 한다.
 export default function Home({
-  data,
+  allBooks,
+  recoBooks,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  console.log(data); //? 서버에서도 한번 실행되고 브라우저애서도 한번 실행되는걸 볼 수 있음.
-
-  //? 어떠한 조건도 없이 window객체를 쓰면 undefined가 나온다.
-  //? ssr은 서버에서 한번 브라우저에서 한번 실행되기 때문에 컴포넌트 안에서도 브라우저 객체는 사용불가
-  // window.location
-
-  //? 사용하고 싶을때 방법중 하나는 useEffect를 사용하여 마운트되고 나서 실행하면 된다.
-  useEffect(() => {
-    console.log("클라이언트 사이드");
-    console.log(window);
-  }, []);
-
   return (
     <div className={style.container}>
       <section>
         <h3>지금 추천하는 도서</h3>
-        {books.map((book) => (
+        {recoBooks.map((book) => (
           <BookItem key={book.id} {...book} />
         ))}
       </section>
       <section>
         <h3>등록된 모든 도서</h3>
-        {books.map((book) => (
+        {allBooks.map((book) => (
           <BookItem key={book.id} {...book} />
         ))}
       </section>

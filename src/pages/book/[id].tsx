@@ -1,4 +1,6 @@
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import style from "./[id].module.css";
+import { fetchOneBook } from "@/lib/fetch.one-book";
 //* URL 파라미터를 사용해서 동적경로에 대응하기
 //* [id] : 경로뒤에 하나의 id가 올 수 있음  localhost:3000/book/100
 //* [...id] : 경로뒤에 여러개의 id가 연달아 올 수 있음  localhost:3000/book/100/201/303
@@ -20,9 +22,29 @@ const mockData = {
     "https://shopping-phinf.pstatic.net/main_3888828/38888282618.20230913071643.jpg",
 };
 
-const Page = () => {
+export const getServerSideProps = async (
+  context: GetServerSidePropsContext
+) => {
+  //* 해당 페이지는 무조건 url파라미터가 있어야 하기 때문에 !단언을 해준다. (undefined가 아니라는 의미)
+  const id = context.params!.id;
+  console.log(id);
+  const book = await fetchOneBook(Number(id));
+
+  return {
+    props: {
+      book,
+    },
+  };
+};
+
+const Page = ({
+  book,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+  if (!book) return "문제가 발생헀습니다. 다시 시도해주세요!";
+
+  //* book은 null값일 수 있으므로 위에서 예외 처리
   const { id, title, subTitle, description, author, publisher, coverImgUrl } =
-    mockData;
+    book;
 
   return (
     <div className={style.container}>
