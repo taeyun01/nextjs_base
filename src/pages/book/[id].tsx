@@ -7,6 +7,7 @@ import {
 import style from "./[id].module.css";
 import { fetchOneBook } from "@/lib/fetch.one-book";
 import { useRouter } from "next/router";
+import Head from "next/head";
 //* URL 파라미터를 사용해서 동적경로에 대응하기
 //* [id] : 경로뒤에 하나의 id가 올 수 있음  localhost:3000/book/100
 //* [...id] : 경로뒤에 여러개의 id가 연달아 올 수 있음  localhost:3000/book/100/201/303
@@ -35,6 +36,7 @@ export const getStaticPaths = async () => {
   return {
     //* 동적인 경로에 SSG를 적용하려먼 반드시 사전렌더링이 진행되기 전에 이 페이지에 존재하는 모든 경로들을 직접 설정하는 과정을 먼저 진행해줘야 한다. (getStaticPaths()로 설정)
     //* 다음 3개의 페이지가 존재할 수 있음을 먼저 설정해줘야한다.
+    //* 정리: 빌드타임에 book/1, book/2, book/3 페이지는 미리 만들어 놓고 paths에 포함되지 않는 경로는 fallback: true로 설정해서 SSR 방식으로 요청이 들어올 때 즉각적으로 서버에서 생성이 되는데 이때 브라우저가 페이지의 생성을 너무 오래 기다리지 않게 막기 위해서 일단 빠르게 데이터가 없는 폴백 상태의 페이지부터 반환함.
     paths: [
       { params: { id: "1" } }, // 프레임워크 상 id는 문자열만 가능하다.
       { params: { id: "2" } }, // book/2에 접속하면 사전에 만들어둔 book/2.html을 바로 반환해준다.
@@ -64,10 +66,26 @@ export const getStaticProps = async (context: GetStaticPropsContext) => {
   };
 };
 
+//* 페이지가 폴백 상태일때는 로딩중 입니다 페이지가 떠서 meta태그가 적용되지 않아 seo설정이 안됨.
+//* 해결책으로 로딩중 입니다.를 반환할때 거기다가도 Head태그를 넣어주어 페이지가 로딩중인(fallback) 상황이라도 기본적인 seo설정을 해줄 수 있다.
 const Page = ({ book }: InferGetStaticPropsType<typeof getStaticProps>) => {
   const router = useRouter();
   // 데이터가 페칭중일 때
-  if (router.isFallback) return "로딩중 입니다.";
+  if (router.isFallback) {
+    return (
+      <>
+        <Head>
+          <title>책 추천</title>
+          <meta property="og:image" content="./thumbnail.png" />
+          <meta property="og:title" content="책 추천" />
+          <meta
+            property="og:description"
+            content="책 추천 사이트에 등록된 도서들을 만나보세요"
+          />
+        </Head>
+      </>
+    );
+  }
   // 데이터 로딩이 끝났는데도 문제가 발생했을 때
   if (!book) return "문제가 발생헀습니다. 다시 시도해주세요!";
 
@@ -76,20 +94,28 @@ const Page = ({ book }: InferGetStaticPropsType<typeof getStaticProps>) => {
     book;
 
   return (
-    <div className={style.container}>
-      <div
-        className={style.cover_img_container}
-        style={{ backgroundImage: `url('${coverImgUrl}')` }}
-      >
-        <img src={coverImgUrl} alt={title} />
+    <>
+      <Head>
+        <title>{title}</title>
+        <meta property="og:image" content={coverImgUrl} />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+      </Head>
+      <div className={style.container}>
+        <div
+          className={style.cover_img_container}
+          style={{ backgroundImage: `url('${coverImgUrl}')` }}
+        >
+          <img src={coverImgUrl} alt={title} />
+        </div>
+        <div className={style.title}>{title}</div>
+        <div className={style.subtitle}>{subTitle}</div>
+        <div className={style.author}>
+          {author} | {publisher}
+        </div>
+        <div className={style.description}>{description}</div>
       </div>
-      <div className={style.title}>{title}</div>
-      <div className={style.subtitle}>{subTitle}</div>
-      <div className={style.author}>
-        {author} | {publisher}
-      </div>
-      <div className={style.description}>{description}</div>
-    </div>
+    </>
   );
 };
 

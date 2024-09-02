@@ -1,15 +1,10 @@
 import SearchableLayout from "@/components/searchable-layout";
 import { useRouter } from "next/router";
 import BookItem from "@/components/book-item";
-import books from "@/mock/books.json";
-import {
-  GetServerSidePropsContext,
-  GetStaticPropsContext,
-  InferGetServerSidePropsType,
-} from "next";
 import { fetchBooks } from "@/lib/fetch-books";
 import { useEffect, useState } from "react";
 import { BookData } from "@/types/types";
+import Head from "next/head";
 
 //* context의 매개변수에는 현재 브라우저로 부터 받은 요청에 대한 모든 정보가 다 포함돼있음
 // export const getStaticProps = async (
@@ -30,6 +25,7 @@ import { BookData } from "@/types/types";
 // };
 
 const Page = () => {
+  //* 빌드 타임에는 데이터를 미리 볼러올 수 없는 페이지가 있다면 클라이언트에서 처리하기 (리액트에서 처리하는 거랑 같음)
   const [books, setBooks] = useState<BookData[]>([]);
   const router = useRouter();
   const q = router.query.q;
@@ -47,11 +43,22 @@ const Page = () => {
   }, [q]);
 
   return (
-    <div>
-      {books.map((book) => (
-        <BookItem key={book.id} {...book} />
-      ))}
-    </div>
+    <>
+      <Head>
+        <title>책 추천 - 검색결과</title>
+        <meta property="og:image" content="./thumbnail.png" />
+        <meta property="og:title" content="책 추천 - 검색결과" />
+        <meta
+          property="og:description"
+          content="책 추천 사이트에 등록된 도서들을 만나보세요"
+        />
+      </Head>
+      <div>
+        {books.map((book) => (
+          <BookItem key={book.id} {...book} />
+        ))}
+      </div>
+    </>
   );
 };
 
